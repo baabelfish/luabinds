@@ -16,7 +16,8 @@ Simple and easy bindings for Lua that try to leverage from C++14.
 
 # Usage
 
-## Introduce a lua script to be used in the following examples
+## Basics
+### Introduce a lua script to be used in the following examples
 ```lua
 -- Example: somefile.lua
 
@@ -70,13 +71,13 @@ print("All done")
 
 ```
 
-## Evaluating the script
+### Evaluating the script
 
 ```cpp
 lua::Lua lua("somefile.lua"); // Evals the file and prints "All done" doing so
 ```
 
-## Accessing data
+### Accessing data
 
 ```cpp
 auto some_global = lua.get("global"); // "get" defaults to std::string without template args
