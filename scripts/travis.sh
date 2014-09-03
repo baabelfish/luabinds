@@ -8,6 +8,18 @@ sudo apt-get -qq install libstdc++-4.8-dev
 # Install coveralls
 sudo pip install cpp-coveralls
 
+# Lua
+mkdir dependencies
+cd dependencies
+git clone https://github.com/LuaDist/lua.git --quiet
+cd lua
+cmake .
+make
+sudo make install
+
+# Debug
+find /usr/include|grep lua
+
 cmake .
 make
 ./ytest
