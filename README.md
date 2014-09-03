@@ -54,18 +54,9 @@ function multire()
     return 1, "something", 42
 end
 
--- Some function that calls a cpp function
-function superFastSum(a, b)
-    return cppSum(a, b)
-end
-
-function hello(myName)
-    return cppHello(myName)
-end
-
 -- These will work only with the last example
-print(superFastSum(1, 2)) -- Prints: 3
-print(hello("you")) -- Prints: Hello you!
+print(cppSum(1, 2, 5)) -- Prints: 8
+print(cppHello("you")) -- Prints: Hello you!
 
 print("All done")
 
