@@ -1,4 +1,4 @@
-Luabinds
+Luabinds [![Build Status](https://travis-ci.org/baabelfish/luabinds.svg?branch=master)](https://travis-ci.org/baabelfish/luabinds)
 ========
 
 Simple and easy bindings for Lua that try to leverage from C++14.
