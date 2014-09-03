@@ -131,3 +131,6 @@ lua::Lua lua("tests/luatest.lua",
 # Caveats
 - Does not support all functionality lua provides for c++
 - There are some ugly hacks that might not work in the future
+
+# TODO
+- Change script while running it
