@@ -1,6 +1,5 @@
 #pragma once
 
-#include <lua.hpp>
 #include <iostream>
 #include <map>
 #include <tuple>
@@ -8,6 +7,8 @@
 #include <vector>
 #include <exception>
 #include <functional>
+
+#include "config.hpp"
 #include "misc.hpp"
 #include "helpers.hpp"
 #include "state.hpp"
