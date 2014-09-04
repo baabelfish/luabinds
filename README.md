@@ -85,18 +85,15 @@ assert(minion_health == 10);
 lua.call("singlePrint")("Hello and print me!"); // will call function "singlePrint" with single string argument
 ```
 
-### Functions with one return value and variadic functions
+### Store Lua functions as objects
 ```cpp
-auto result = lua.call<int>("sum")(1, 2); // If only one template argument provided the return type will be it (int in this case)
-
-// Variadic functions with different types
-result = lua.call<int>("sum")(1, 2, 3); // result == 6
-result = lua.call<int>("sum")(1, 2, "3", 4); // result == 10
-result = lua.call<int>("sum")(1, 2, 3, 4, 5); // result == 15
+auto f = lua.call("singlePrint"); // Gets the function
+f("Hello and print me!"); // Call it
 ```
 
-### Functions can be stored as objects
+### Functions with one return value and variadic functions
 ```cpp
+auto result = lua.call<int>("sum")(1, 2); // result type: int
 auto sum = lua.call<int>("sum");
 sum(1, 2, 3); // == 6
 sum(1, 2, "3", 4); // == 10
