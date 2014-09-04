@@ -9,6 +9,8 @@ yTestPackage moonscript([]{
 
         it("", []{
             lua::Lua lua(Path + "moonscript.lua");
+            auto re = lua.call<int>("MultiplyAndSum")(2, 3);
+            Assert().isEqual(re, 11);
         });
 
         it("", []{

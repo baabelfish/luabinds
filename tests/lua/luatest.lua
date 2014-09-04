@@ -49,3 +49,7 @@ end
 if (other ~= nil) then
     other()
 end
+
+somefunc = function()
+    return 17
+end

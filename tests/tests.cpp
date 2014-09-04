@@ -88,6 +88,11 @@ yTestPackage pkg([]{
                     .isFalse(hasVisitedFirst);
         });
 
+        it("works with function variables", []{
+            lua::Lua lua(Testfile);
+            Assert().isEqual(lua.call<int>("somefunc")(), 17);
+        });
+
         it("works with variadic cpp-functions", []{
             lua::Lua lua(Testfile,
                 "cppsum", [](lua::State& s) {
