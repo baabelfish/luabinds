@@ -6,6 +6,9 @@ sudo apt-get -qq install llvm
 sudo apt-get -qq install libstdc++-4.8-dev
 sudo apt-get -qq install luarocks
 
+# Install moonscript compiler
+sudo luarocks install moonscript
+
 # Install coveralls
 sudo pip install cpp-coveralls
 
