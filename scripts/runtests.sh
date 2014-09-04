@@ -1,7 +1,7 @@
 #!/bin/bash
 while true; do
     clear
-    make -j $((`cat /proc/cpuinfo|grep processor|wc -l`*2)) && clear && ./ytest
+    make -j $((`cat /proc/cpuinfo|grep processor|wc -l`*2)) && clear && ./scripts/buildmoonscripts.sh && clear && ./ytest
 
     if [[ $(which inotifywait) == "" ]]; then
         sleep 5

@@ -37,13 +37,13 @@ template<> inline float luaGet<float>(lua_State* state, int index) { return lua_
 template<> inline double luaGet<double>(lua_State* state, int index) { return lua_tonumber(state, index); };
 template<> inline char const* luaGet<char const*>(lua_State* state, int index) { return lua_tostring(state, index); };
 
-lua_State* pushArguments(lua_State* state) { return state; }
+inline lua_State* pushArguments(lua_State* state) { return state; }
 
 /**
  * @brief A helper to create lua_State* objects from arguments
  */
 template<typename T>
-lua_State* pushArguments(lua_State* state, T a) {
+inline lua_State* pushArguments(lua_State* state, T a) {
     LuaHelpers::luaPush<T>(state, a);
     return state;
 }
@@ -52,7 +52,7 @@ lua_State* pushArguments(lua_State* state, T a) {
  * @brief A helper to create lua_State* objects from arguments
  */
 template<typename T, typename... Args>
-lua_State* pushArguments(lua_State* state, T a, Args... rest) {
+inline lua_State* pushArguments(lua_State* state, T a, Args... rest) {
     LuaHelpers::luaPush<T>(state, a);
     pushArguments(state, rest...);
     return state;

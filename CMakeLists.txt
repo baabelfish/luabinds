@@ -15,6 +15,7 @@ set(SOURCES
 
 set(TESTS
     tests/tests.cpp
+    tests/moonscript.cpp
 )
 
 add_executable(ytest ${SOURCES} ${TESTS})

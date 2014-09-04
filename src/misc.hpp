@@ -6,7 +6,7 @@
 namespace lua {
 namespace misc {
 
-std::vector<std::string> split(const std::string& var, char ch) {
+inline std::vector<std::string> split(const std::string& var, char ch) {
     std::vector<std::string> splits;
     std::size_t last = 0;
     for (std::size_t i = 0; i < var.size(); ++i) {
