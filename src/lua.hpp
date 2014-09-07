@@ -12,6 +12,7 @@
 #include "misc.hpp"
 #include "helpers.hpp"
 #include "state.hpp"
+#include "exceptions.hpp"
 
 namespace lua {
 
@@ -33,27 +34,17 @@ public:
         if (!m_lua) {
             throw std::bad_alloc();
         }
-        else {
-            attach(std::forward<Api>(api)...);
-            luaL_openlibs(m_lua);
-            luaL_dofile(m_lua, file.c_str());
+
+        attach(std::forward<Api>(api)...);
+        luaL_openlibs(m_lua);
+        auto err = luaL_dofile(m_lua, file.c_str());
+        if (err) {
+            throw exceptions::CouldNotParse("Lua script not found or erroneous: " + file);
         }
     }
 
     virtual ~Lua() {
         lua_close(m_lua);
-    }
-
-    /**
-     * @brief Specialization for get-without template params.
-     *
-     * @param var
-     * @param otherwise
-     *
-     * @return
-     */
-    inline std::string get(std::string var, std::string&& otherwise = "") {
-        return get<std::string>(var, std::move(otherwise));
     }
 
     /**
@@ -66,16 +57,14 @@ public:
       */
     template<typename T>
     T get(std::string var, T&& otherwise = T()) {
-        try {
-            auto popped = getToStack(m_lua, var);
-            otherwise = LuaHelpers::luaGet<T>(m_lua, -1);
-            lua_pop(m_lua, popped);
-        }
-        catch (NoSuchKey ex) {
-            std::cout << ex.what() << std::endl;
-            throw ex;
-        }
+        auto popped = getToStack(m_lua, var);
+        otherwise = LuaHelpers::luaGet<T>(m_lua, -1);
+        lua_pop(m_lua, popped);
         return otherwise;
+    }
+
+    inline std::string get(std::string var, std::string&& otherwise = "") {
+        return get<std::string>(var, std::move(otherwise));
     }
 
     /**
@@ -161,10 +150,8 @@ private:
             auto err = lua_isnil(lua, -1);
             if (err) {
                 std::string joined = splits[0];
-                for (std::size_t i = 1; i < index; ++i) {
-                    joined += '.' + splits[i];
-                }
-                throw NoSuchKey("Error! No such field: " + joined);
+                for (std::size_t i = 1; i < index; ++i) { joined += '.' + splits[i]; }
+                throw exceptions::NoSuchKey("Error! No such field: " + joined);
             }
             pushes += 1;
             return err;

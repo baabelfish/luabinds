@@ -15,6 +15,7 @@ set(SOURCES
 
 set(TESTS
     tests/tests.cpp
+    tests/errors.cpp
     tests/moonscript.cpp
 )
 

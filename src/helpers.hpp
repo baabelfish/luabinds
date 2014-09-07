@@ -7,20 +7,8 @@
 #include <exception>
 
 namespace lua {
-class NoSuchKey : public std::exception {
-    std::string problem;
-
-public:
-    NoSuchKey(std::string problem): problem(problem) {
-
-    }
-
-    const char* what() const noexcept {
-        return problem.c_str();
-    }
-};
-
 namespace LuaHelpers {
+
 template<typename T> void luaPush(lua_State* state, T param);
 template<> inline void luaPush<char const*>(lua_State* state, char const* param) { lua_pushstring(state, param); }
 template<> inline void luaPush<std::string>(lua_State* state, std::string param) { lua_pushstring(state, param.c_str()); }
