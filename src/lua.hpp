@@ -87,9 +87,24 @@ public:
         return createCall<true, Reval...>(func);
     }
 
+    /**
+     * @brief Returns the lua version
+     */
     int version() const {
         return static_cast<int>(*lua_version(m_lua));
     }
+
+    /**
+     * @brief Checks if the stack has extra amount of slots left
+     *
+     * @param extra Amount of required slots
+     *
+     * @return false if there is not enough slots
+     */
+    bool checkstack(int extra) const {
+        return lua_checkstack(m_lua, extra);
+    }
+
 
 private:
     std::string m_file;
