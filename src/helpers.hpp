@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.hpp"
+#include "exceptions.hpp"
 #include <tuple>
 #include <string>
 #include <vector>
@@ -18,12 +19,37 @@ template<> inline void luaPush<bool>(lua_State* state, bool param) { lua_pushboo
 
 template<typename T>
 T luaGet(lua_State* state, int index);
-template<> inline bool luaGet<bool>(lua_State* state, int index) { return lua_toboolean(state, index); };
-template<> inline int luaGet<int>(lua_State* state, int index) { return lua_tointeger(state, index); };
-template<> inline std::string luaGet<std::string>(lua_State* state, int index) { return lua_tostring(state, index); };
-template<> inline float luaGet<float>(lua_State* state, int index) { return lua_tonumber(state, index); };
-template<> inline double luaGet<double>(lua_State* state, int index) { return lua_tonumber(state, index); };
-template<> inline char const* luaGet<char const*>(lua_State* state, int index) { return lua_tostring(state, index); };
+
+template<> inline bool luaGet<bool>(lua_State* state, int index) {
+    if (!lua_isboolean(state, index)) { throw lua::exceptions::NotValidType("Given type is not a boolean"); }
+    return lua_toboolean(state, index);
+};
+
+template<> inline int luaGet<int>(lua_State* state, int index) {
+    if (!lua_isnumber(state, index)) { throw lua::exceptions::NotValidType("Given type is not a number"); }
+    return lua_tointeger(state, index);
+};
+
+template<> inline std::string luaGet<std::string>(lua_State* state, int index) {
+    if (!lua_isstring(state, index)) { throw lua::exceptions::NotValidType("Given type is not a string"); }
+    return lua_tostring(state, index);
+};
+
+template<> inline float luaGet<float>(lua_State* state, int index) {
+    if (!lua_isnumber(state, index)) { throw lua::exceptions::NotValidType("Given type is not a number"); }
+    return lua_tonumber(state, index);
+};
+
+template<> inline double luaGet<double>(lua_State* state, int index) {
+    if (!lua_isnumber(state, index)) { throw lua::exceptions::NotValidType("Given type is not a number"); }
+    return lua_tonumber(state, index);
+};
+
+template<> inline char const* luaGet<char const*>(lua_State* state, int index) {
+    if (!lua_isstring(state, index)) { throw lua::exceptions::NotValidType("Given type is not a string"); }
+    return lua_tostring(state, index);
+};
+
 
 inline lua_State* pushArguments(lua_State* state) { return state; }
 

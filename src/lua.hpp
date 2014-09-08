@@ -13,6 +13,7 @@
 #include "helpers.hpp"
 #include "state.hpp"
 #include "exceptions.hpp"
+#include "constants.hpp"
 
 namespace lua {
 
@@ -147,7 +148,7 @@ private:
         std::size_t pushes = 0;
 
         auto err = [&](std::size_t index) -> bool {
-            auto err = lua_isnil(lua, -1);
+            auto err = lua_isnil(lua, -1) || lua_isnone(lua, -1);
             if (err) {
                 std::string joined = splits[0];
                 for (std::size_t i = 1; i < index; ++i) { joined += '.' + splits[i]; }

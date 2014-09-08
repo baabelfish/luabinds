@@ -14,5 +14,9 @@ struct CouldNotParse : public std::runtime_error {
     CouldNotParse(std::string problem): std::runtime_error(problem.c_str()) {}
 };
 
+struct NotValidType : public std::runtime_error {
+    NotValidType(std::string problem): std::runtime_error(problem.c_str()) {}
+};
+
 } // namespace exceptions
 } // namespace lua
