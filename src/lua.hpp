@@ -29,8 +29,8 @@ public:
      */
     template<typename... Api>
     Lua(const std::string& file, Api... api):
-        m_file(file),
-        m_lua(luaL_newstate())
+        m_lua(luaL_newstate()),
+        m_file(file)
     {
         if (!m_lua) { throw std::bad_alloc(); }
 
@@ -56,9 +56,9 @@ public:
       */
     template<typename T>
     T get(std::string var, T&& otherwise = T()) {
-        auto popped = getToStack(m_lua, var);
+        auto ssize = getToStack(m_lua, var);
         otherwise = LuaHelpers::luaGet<T>(m_lua, -1);
-        lua_pop(m_lua, popped);
+        popStack(m_lua, ssize);
         return otherwise;
     }
 
@@ -109,10 +109,13 @@ public:
         return lua_gc(m_lua, static_cast<int>(task), 0);
     }
 
+    lua_State* handle() const {
+        return m_lua;
+    }
 
 private:
-    std::string m_file;
     lua_State* m_lua;
+    std::string m_file;
 
     template<typename... Args>
     void attach() {}
@@ -139,10 +142,11 @@ private:
     auto createCall(std::string func) {
         return [lua = m_lua, f = func](auto... args) {
             std::tuple<Reval...> res;
-            lua_getglobal(lua, f.c_str());
+            getToStack(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
             lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
             LuaHelpers::forEach(lua, res);
+            // lua_settop(lua, 0);
             return res;
         };
     }
@@ -151,11 +155,12 @@ private:
              typename std::enable_if<sizeof...(Reval) == 1>::type* = nullptr>
     auto createCall(std::string func) {
         return [lua = m_lua, f = func](auto... args) {
-            std::tuple<Reval...> res;
-            lua_getglobal(lua, f.c_str());
+            getToStack(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
             lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
-            return LuaHelpers::luaGet<typename std::tuple_element<0, decltype(res)>::type>(lua, -1);
+            auto res = LuaHelpers::luaGet<typename std::tuple_element<0, std::tuple<Reval...>>::type>(lua, -1);
+            lua_settop(lua, 0);
+            return res;
         };
     }
 
@@ -163,9 +168,10 @@ private:
              typename std::enable_if<sizeof...(Reval) == 0>::type* = nullptr>
     auto createCall(std::string func) {
         return [lua = m_lua, f = func](auto... args) {
-            lua_getglobal(lua, f.c_str());
+            getToStack(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
             lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
+            // lua_settop(lua, 0);
         };
     }
 
@@ -190,6 +196,10 @@ private:
             case LUA_OK: return;
             default: return;
         };
+    }
+
+    static void popStack(lua_State* lua, int amount) {
+        lua_pop(lua, amount);
     }
 
     static std::size_t getToStack(lua_State* lua, const std::string& var) {

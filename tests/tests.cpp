@@ -1,6 +1,7 @@
 #include "../lib/ytest/ytest.hpp"
 #include "../luabinds.hpp"
 #include <tuple>
+#include <thread>
 
 static const std::string Testfile = "tests/lua/luatest.lua";
 
@@ -118,6 +119,12 @@ yTestPackage pkg([]{
             auto version = lua.version();
             Assert().isSameOrGreaterThan(version, 500)
                     .isLessThan(version, 600);
+        });
+
+        it("works with builtin functions", []{
+            lua::Lua lua(Testfile);
+            auto lowered = lua.call<std::string>("string.lower")("HeLlO WORLd!");
+            Assert().isEqual(lowered, "hello world!");
         });
 
     });
