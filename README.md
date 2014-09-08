@@ -14,6 +14,20 @@ Simple and easy bindings for Lua that try to leverage from C++14.
 # Installation
 - Simply include ``luabinds.hpp`` and compile with c++14 support and lua linking
 
+## Running the tests
+- You need moonscript compiler to run the tests
+
+```bash
+sudo pacman -S luarocks # Install luarocks
+sudo luarocks install moonscript
+
+git clone https://github.com/baabelfish/luabinds
+cd luabinds
+cmake .
+make
+./ytest
+```
+
 # Usage
 
 ## Basics
