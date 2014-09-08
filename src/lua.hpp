@@ -105,6 +105,10 @@ public:
         return lua_checkstack(m_lua, extra);
     }
 
+    bool garbageCollector(lua::GC task) {
+        return lua_gc(m_lua, static_cast<int>(task), 0);
+    }
+
 
 private:
     std::string m_file;
