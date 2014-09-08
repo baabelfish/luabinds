@@ -160,13 +160,14 @@ private:
         int as = ArgSize;
         int rs = RevalSize;
         int third = 0;
+
         switch (lua_pcall(lua, as, rs, third)) {
-        case LUA_ERRRUN: throw exceptions::CallFailed("Runtime error occurred");
-        case LUA_ERRMEM: throw exceptions::CallFailed("Memory allocation error");
-        case LUA_ERRERR: throw exceptions::CallFailed("Message handler failed");
-        case LUA_ERRGCMM: throw exceptions::CallFailed("Garbage collector failed");
-        case LUA_OK: return;
-        default: return;
+            case LUA_ERRRUN: throw exceptions::CallFailed("Runtime error occurred");
+            case LUA_ERRMEM: throw exceptions::CallFailed("Memory allocation error");
+            case LUA_ERRERR: throw exceptions::CallFailed("Message handler failed");
+            case LUA_ERRGCMM: throw exceptions::CallFailed("Garbage collector failed");
+            case LUA_OK: return;
+            default: return;
         };
     }
 
