@@ -18,5 +18,9 @@ struct NotValidType : public std::runtime_error {
     NotValidType(std::string problem): std::runtime_error(problem.c_str()) {}
 };
 
+struct CallFailed : public std::runtime_error {
+    CallFailed(std::string problem): std::runtime_error(problem.c_str()) {}
+};
+
 } // namespace exceptions
 } // namespace lua

@@ -81,7 +81,12 @@ public:
      */
     template<typename... Reval>
     auto call(std::string func) {
-        return createCall<Reval...>(func);
+        return createCall<false, Reval...>(func);
+    }
+
+    template<typename... Reval>
+    auto pcall(std::string func) {
+        return createCall<true, Reval...>(func);
     }
 
 private:
@@ -108,38 +113,60 @@ private:
 
     // Clang fails:
     // typename std::enable_if<sizeof...(Reval) > 1>::type* = nullptr>
-    template<typename... Reval,
+    template<bool UseSafe, typename... Reval,
              typename std::enable_if<sizeof...(Reval) >= 2>::type* = nullptr>
     auto createCall(std::string func) {
         return [lua = m_lua, f = func](auto... args) {
             std::tuple<Reval...> res;
             lua_getglobal(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
-            lua_call(lua, sizeof...(args), sizeof...(Reval));
+            lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
             LuaHelpers::forEach(lua, res);
             return res;
         };
     }
 
-    template<typename... Reval,
+    template<bool UseSafe, typename... Reval,
              typename std::enable_if<sizeof...(Reval) == 1>::type* = nullptr>
     auto createCall(std::string func) {
         return [lua = m_lua, f = func](auto... args) {
             std::tuple<Reval...> res;
             lua_getglobal(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
-            lua_call(lua, sizeof...(args), sizeof...(Reval));
+            lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
             return LuaHelpers::luaGet<typename std::tuple_element<0, decltype(res)>::type>(lua, -1);
         };
     }
 
-    template<typename... Reval,
+    template<bool UseSafe, typename... Reval,
              typename std::enable_if<sizeof...(Reval) == 0>::type* = nullptr>
     auto createCall(std::string func) {
         return [lua = m_lua, f = func](auto... args) {
             lua_getglobal(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
-            lua_call(lua, sizeof...(args), sizeof...(Reval));
+            lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
+        };
+    }
+
+    template<bool IsSafe, std::size_t ArgSize, std::size_t RevalSize,
+             typename std::enable_if<!IsSafe>::type* = nullptr>
+    static void lcall(lua_State* lua) {
+        lua_call(lua, ArgSize, RevalSize);
+    }
+
+    template<bool IsSafe, std::size_t ArgSize, std::size_t RevalSize,
+             typename std::enable_if<IsSafe>::type* = nullptr>
+    static void lcall(lua_State* lua) {
+        int as = ArgSize;
+        int rs = RevalSize;
+        int third = 0;
+        switch (lua_pcall(lua, as, rs, third)) {
+        case LUA_ERRRUN: throw exceptions::CallFailed("Runtime error occurred");
+        case LUA_ERRMEM: throw exceptions::CallFailed("Memory allocation error");
+        case LUA_ERRERR: throw exceptions::CallFailed("Message handler failed");
+        case LUA_ERRGCMM: throw exceptions::CallFailed("Garbage collector failed");
+        case LUA_OK: return;
+        default: return;
         };
     }
 
