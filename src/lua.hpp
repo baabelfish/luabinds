@@ -30,12 +30,13 @@ public:
     template<typename... Api>
     Lua(const std::string& file, Api... api):
         m_lua(luaL_newstate()),
-        m_file(file)
-    {
+        m_file(file) {
         if (!m_lua) { throw std::bad_alloc(); }
-
-        attach(std::forward<Api>(api)...);
         luaL_openlibs(m_lua);
+
+        attachApi(std::forward<Api>(api)...);
+        // attach(m_apif);
+
         auto err = luaL_dofile(m_lua, file.c_str());
         if (err) {
             throw exceptions::CouldNotParse("Lua script not found or erroneous: " + file);
@@ -118,12 +119,10 @@ private:
     std::string m_file;
 
     template<typename... Args>
-    void attach() {}
+    void attachApi() {}
 
     template<typename... Args>
-    void attach(std::string id, std::function<void(State&)> f, Args... rest) {
-        // Ugly trick to get scope variables in and I got no idea why it works...
-        // FIXME: Seek alternatives
+    void attachApi(std::string id, std::function<void(State&)> f, Args... rest) {
         static std::function<void(State&)> func;
         func = f;
         auto lf = [](lua_State* state) -> int {
@@ -132,7 +131,7 @@ private:
             return params.sizeRevals();
         };
         lua_register(m_lua, id.c_str(), lf);
-        attach(rest...);
+        attachApi(std::forward<Args>(rest)...);
     }
 
     // Clang fails:
@@ -146,7 +145,7 @@ private:
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
             lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
             LuaHelpers::forEach(lua, res);
-            // lua_settop(lua, 0);
+            lua_settop(lua, 0);
             return res;
         };
     }
@@ -171,7 +170,7 @@ private:
             getToStack(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
             lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
-            // lua_settop(lua, 0);
+            lua_settop(lua, 0);
         };
     }
 
