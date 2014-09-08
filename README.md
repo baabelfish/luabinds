@@ -18,7 +18,10 @@ Simple and easy bindings for Lua that try to leverage from C++14.
 - You need moonscript compiler to run the tests
 
 ```bash
-sudo pacman -S luarocks # Install luarocks
+sudo pacman -S luarocks
+# Ubuntu/Debian:
+# sudo apt-get -qq install luarocks
+
 sudo luarocks install moonscript
 
 git clone https://github.com/baabelfish/luabinds
