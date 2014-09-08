@@ -32,9 +32,7 @@ public:
         m_file(file),
         m_lua(luaL_newstate())
     {
-        if (!m_lua) {
-            throw std::bad_alloc();
-        }
+        if (!m_lua) { throw std::bad_alloc(); }
 
         attach(std::forward<Api>(api)...);
         luaL_openlibs(m_lua);
@@ -87,6 +85,10 @@ public:
     template<typename... Reval>
     auto pcall(std::string func) {
         return createCall<true, Reval...>(func);
+    }
+
+    int version() const {
+        return static_cast<int>(*lua_version(m_lua));
     }
 
 private:

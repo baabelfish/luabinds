@@ -113,6 +113,13 @@ yTestPackage pkg([]{
                     .isEqual(f(1, 10, 100), 111);
         });
 
+        it("knows the version of lua", []{
+            lua::Lua lua(Testfile);
+            auto version = lua.version();
+            Assert().isSameOrGreaterThan(version, 500)
+                    .isLessThan(version, 600);
+        });
+
     });
 });
 
