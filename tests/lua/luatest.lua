@@ -2,6 +2,7 @@ player = {
     health = 100,
     mana = 25,
     stamina = 125,
+    name = "foobar",
 
     minion = {
         health = 10

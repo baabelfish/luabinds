@@ -22,11 +22,19 @@ yTestPackage errors([]{
             Assert().isTrue(works);
         });
 
-        it("throws an exception when accessing a non existant variable", []{
+        it("throws an exception when accessing a non existing variable", []{
             bool works = false;
             lua::Lua lua(Testfile);
-            try { auto val = lua.get("idont.exist"); }
+            try { lua.get("idont.exist"); }
             catch (lua::exceptions::NoSuchKey& e) { works = true; }
+            Assert().isTrue(works);
+        });
+
+        it("throws an exception when conversion fails", []{
+            bool works = false;
+            lua::Lua lua(Testfile);
+            try { lua.get<int>("player.name"); }
+            catch (lua::exceptions::NotValidType& e) { works = true; }
             Assert().isTrue(works);
         });
 
