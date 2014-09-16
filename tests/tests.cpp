@@ -4,6 +4,8 @@
 #include <thread>
 
 static const std::string Testfile = "tests/lua/luatest.lua";
+static const std::string Context1 = "tests/lua/context1.lua";
+static const std::string Context2 = "tests/lua/context2.lua";
 
 yTestPackage pkg([]{
     describe("luabinds", []{
@@ -141,6 +143,19 @@ yTestPackage pkg([]{
             lua.eval(Testfile);
             auto lowered = lua.call<std::string>("string.lower")("HeLlO WORLd!");
             Assert().isEqual(lowered, "hello world!");
+        });
+
+        it("can eval multiple files with the same context", []{
+            lua::Lua lua;
+            lua.attach("sum", [](lua::State& s) {
+                s.push(s.get<int>(1) + s.get<int>(2));
+            });
+
+            lua.eval(Context1);
+            Assert().isEqual(lua.get<int>("result"), 11);
+
+            lua.eval(Context2);
+            Assert().isEqual(lua.get<int>("result"), 121);
         });
 
         it("works with closures", []{

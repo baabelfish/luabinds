@@ -31,9 +31,14 @@ public:
         return LuaHelpers::luaGet<std::string>(m_state, index);
     };
 
+    template<typename T>
+    inline T operator[](int index) const { return get<T>(index); }
+    inline std::string operator[](int index) const { return get<std::string>(index); }
+
     bool isNil(int index) const {
         return lua_isnil(m_state, index);
     };
+
 
     /**
      * @brief Pushes n-amount of arguments for the function to return to Lua
