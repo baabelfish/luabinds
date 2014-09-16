@@ -14,9 +14,10 @@ set(SOURCES
 )
 
 set(TESTS
-    tests/tests.cpp
+    tests/containers.cpp
     tests/errors.cpp
     tests/moonscript.cpp
+    tests/tests.cpp
 )
 
 add_executable(ytest ${SOURCES} ${TESTS})
