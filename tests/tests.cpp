@@ -19,13 +19,14 @@ yTestPackage pkg([]{
             Assert().isEqual(lua.get("global"), "string");
         });
 
-        it("works with lua types", []{
+        it("works with primitive types", []{
             lua::Lua lua;
             lua.eval(Testfile);
-            Assert().isEqual(lua.get<std::string>("data_str"), "a string variable")
-                    .isEqual(lua.get<int>("data_integer"), 10)
-                    .isEqual(lua.get<bool>("data_boolean"), true)
-                    .isEqual(lua.get<float>("data_float"), 7.62);
+            Assert()
+                .isEqual(lua.get<bool>("data_boolean"), true)
+                .isEqual(lua.get<float>("data_float"), 7.62)
+                .isEqual(lua.get<int>("data_integer"), 10)
+                .isEqual(lua.get<std::string>("data_str"), "a string variable");
         });
 
         it("works with tables", []{

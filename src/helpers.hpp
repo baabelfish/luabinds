@@ -6,50 +6,43 @@
 #include <string>
 #include <vector>
 #include <exception>
+#include <cstddef>
+#include "macros.hpp"
 
 namespace lua {
 namespace LuaHelpers {
 
 template<typename T> void luaPush(lua_State* state, T param);
-template<> inline void luaPush<char const*>(lua_State* state, char const* param) { lua_pushstring(state, param); }
 template<> inline void luaPush<std::string>(lua_State* state, std::string param) { lua_pushstring(state, param.c_str()); }
-template<> inline void luaPush<int>(lua_State* state, int param) { lua_pushinteger(state, param); }
-template<> inline void luaPush<float>(lua_State* state, float param) { lua_pushnumber(state, param); }
-template<> inline void luaPush<bool>(lua_State* state, bool param) { lua_pushboolean(state, param); }
+template<> inline void luaPush<std::nullptr_t>(lua_State* state, std::nullptr_t) { lua_pushnil(state); }
+LUA_PUSH_HELPER(lua_pushboolean, bool)
+LUA_PUSH_HELPER(lua_pushinteger, int)
+LUA_PUSH_HELPER(lua_pushinteger, long long)
+LUA_PUSH_HELPER(lua_pushinteger, long)
+LUA_PUSH_HELPER(lua_pushlightuserdata, void*)
+LUA_PUSH_HELPER(lua_pushnumber, double)
+LUA_PUSH_HELPER(lua_pushnumber, float)
+LUA_PUSH_HELPER(lua_pushnumber, long double)
+LUA_PUSH_HELPER(lua_pushstring, char const*)
+LUA_PUSH_HELPER(lua_pushunsigned, unsigned int)
+LUA_PUSH_HELPER(lua_pushunsigned, unsigned long long)
+LUA_PUSH_HELPER(lua_pushunsigned, unsigned long)
 
 template<typename T>
 T luaGet(lua_State* state, int index);
-
-template<> inline bool luaGet<bool>(lua_State* state, int index) {
-    if (!lua_isboolean(state, index)) { throw lua::exceptions::NotValidType("Given type is not a boolean"); }
-    return lua_toboolean(state, index);
-};
-
-template<> inline int luaGet<int>(lua_State* state, int index) {
-    if (!lua_isnumber(state, index)) { throw lua::exceptions::NotValidType("Given type is not a number"); }
-    return lua_tointeger(state, index);
-};
-
-template<> inline std::string luaGet<std::string>(lua_State* state, int index) {
-    if (!lua_isstring(state, index)) { throw lua::exceptions::NotValidType("Given type is not a string"); }
-    return lua_tostring(state, index);
-};
-
-template<> inline float luaGet<float>(lua_State* state, int index) {
-    if (!lua_isnumber(state, index)) { throw lua::exceptions::NotValidType("Given type is not a number"); }
-    return lua_tonumber(state, index);
-};
-
-template<> inline double luaGet<double>(lua_State* state, int index) {
-    if (!lua_isnumber(state, index)) { throw lua::exceptions::NotValidType("Given type is not a number"); }
-    return lua_tonumber(state, index);
-};
-
-template<> inline char const* luaGet<char const*>(lua_State* state, int index) {
-    if (!lua_isstring(state, index)) { throw lua::exceptions::NotValidType("Given type is not a string"); }
-    return lua_tostring(state, index);
-};
-
+LUA_GET_HELPER(lua_toboolean, lua_isboolean, bool)
+LUA_GET_HELPER(lua_tointeger, lua_isnumber, int)
+LUA_GET_HELPER(lua_tointeger, lua_isnumber, long long)
+LUA_GET_HELPER(lua_tointeger, lua_isnumber, long)
+LUA_GET_HELPER(lua_tonumber, lua_isnumber, double)
+LUA_GET_HELPER(lua_tonumber, lua_isnumber, float)
+LUA_GET_HELPER(lua_tonumber, lua_isnumber, long double)
+LUA_GET_HELPER(lua_tostring, lua_isstring, const char*)
+LUA_GET_HELPER(lua_tostring, lua_isstring, std::string)
+LUA_GET_HELPER(lua_tounsigned, lua_isnumber, unsigned int)
+LUA_GET_HELPER(lua_tounsigned, lua_isnumber, unsigned long long)
+LUA_GET_HELPER(lua_tounsigned, lua_isnumber, unsigned long)
+LUA_GET_HELPER(lua_touserdata, lua_islightuserdata, void*)
 
 inline lua_State* pushArguments(lua_State* state) { return state; }
 
