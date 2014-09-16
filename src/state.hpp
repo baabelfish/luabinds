@@ -22,11 +22,15 @@ public:
      * @return
      */
     template<typename T>
-    T get(int index) {
+    T get(int index) const {
         return LuaHelpers::luaGet<T>(m_state, index);
     };
-    std::string get(int index) {
+    std::string get(int index) const {
         return LuaHelpers::luaGet<std::string>(m_state, index);
+    };
+
+    bool isNil(int index) const {
+        return lua_isnil(m_state, index);
     };
 
     /**
