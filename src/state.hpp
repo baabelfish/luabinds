@@ -7,12 +7,14 @@ namespace lua {
 
 class State {
     lua_State* m_state;
-    mutable int m_size;
+    mutable int m_psize;
+    mutable int m_rsize;
 
 public:
     State(lua_State* state):
         m_state(state),
-        m_size(0) {}
+        m_psize(lua_gettop(state)),
+        m_rsize(0) {}
 
     /**
      * @brief Gets the nth-argument and retrieves it with the templated type
@@ -38,21 +40,21 @@ public:
      */
     template<typename... Args>
     void push(Args... args) {
-        m_size += sizeof...(args);
+        m_rsize += sizeof...(args);
         LuaHelpers::pushArguments(m_state, args...);
     };
 
     /**
      * @brief Returns the number of parameters the function was given
      */
-    int sizeParameters() const { return lua_gettop(m_state); }
-    bool hasParameters() const { return lua_gettop(m_state) > 0; }
+    int sizeParameters() const { return m_psize; }
+    bool hasParameters() const { return m_psize > 0; }
 
     /**
      * @brief Returns the amount of return values the function returns
      */
-    bool hasRevals() const { return m_size > 0; }
-    int sizeRevals() const { return m_size; }
+    bool hasRevals() const { return m_rsize > 0; }
+    int sizeRevals() const { return m_rsize; }
 };
 
 } // namespace lua

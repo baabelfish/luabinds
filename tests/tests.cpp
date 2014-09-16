@@ -144,7 +144,8 @@ yTestPackage pkg([]{
         });
 
         it("works with closures", []{
-            lua::Lua lua(Testfile);
+            lua::Lua lua;
+            lua.eval(Testfile);
             auto handle = lua.handle();
             lua_getglobal(handle, "ping");
             lua_Debug db;
