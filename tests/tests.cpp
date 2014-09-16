@@ -127,6 +127,25 @@ yTestPackage pkg([]{
             Assert().isEqual(lowered, "hello world!");
         });
 
+        it("works with closures", []{
+            lua::Lua lua(Testfile);
+            auto handle = lua.handle();
+            lua_getglobal(handle, "ping");
+            lua_Debug db;
+            lua_getinfo(handle, ">n", &db);
+            // std::cout << "Name:     " << db.name << std::endl;
+            // std::cout << "Namewhat: " << db.namewhat << std::endl;
+            // lua::Debugger d(handle);
+            // d.info("global");
+            // lua_getglobal(handle, "refunc");
+            // lua_pushnumber(handle, 5);
+            // lua_call(handle, 1, 1);
+            // if (!lua_isfunction(handle, -1)) {
+            //     std::cout << "not a function" << std::endl;
+            //     return;
+            // }
+        });
+
     });
 });
 

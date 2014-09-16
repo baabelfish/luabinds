@@ -54,3 +54,10 @@ end
 somefunc = function()
     return 17
 end
+
+-- Function returning a function
+function refunc(a)
+    return function()
+        print(a)
+    end
+end

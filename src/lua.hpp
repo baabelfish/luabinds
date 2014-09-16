@@ -57,9 +57,9 @@ public:
       */
     template<typename T>
     T get(std::string var, T&& otherwise = T()) {
-        auto ssize = getToStack(m_lua, var);
+        auto ssize = LuaHelpers::getToStack(m_lua, var);
         otherwise = LuaHelpers::luaGet<T>(m_lua, -1);
-        popStack(m_lua, ssize);
+        LuaHelpers::popStack(m_lua, ssize);
         return otherwise;
     }
 
@@ -80,12 +80,38 @@ public:
      */
     template<typename... Reval>
     auto call(std::string func) {
-        return createCall<false, Reval...>(func);
+        return createCall<internal::FunctionType::Normal, Reval...>(func);
+    }
+
+    template<typename... Reval>
+    auto call(lua_CFunction func) {
+        return [=](auto... args) {
+            lua_pushcfunction(m_lua, func);
+            // std::cout << sizeof...(args) << std::endl;
+            // LuaHelpers::pushArguments(m_lua, std::forward<decltype(args)>(args)...);
+            lcall<internal::FunctionType::Normal, sizeof...(args), sizeof...(Reval)>(m_lua);
+            lua_settop(m_lua, 0);
+        };
     }
 
     template<typename... Reval>
     auto pcall(std::string func) {
-        return createCall<true, Reval...>(func);
+        return createCall<internal::FunctionType::Safe, Reval...>(func);
+    }
+
+    template<typename... Reval>
+    auto fcall(std::string func) {
+        return [lua = m_lua, f = func](auto... args) {
+            LuaHelpers::getToStack(lua, f.c_str());
+            LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
+            lcall<internal::FunctionType::Function, sizeof...(args), sizeof...(Reval)>(lua);
+            // if (!lua_iscfunction(lua, -1)) {
+            //     throw exceptions::NotValidType("Given type is not a function");
+            // }
+            auto lf = lua_tocfunction(lua, -1);
+            lua_settop(lua, 0);
+            return lf;
+        };
     }
 
     /**
@@ -134,14 +160,16 @@ private:
         attachApi(std::forward<Args>(rest)...);
     }
 
+    // createCall
+    // ================================================================================
     // Clang fails:
     // typename std::enable_if<sizeof...(Reval) > 1>::type* = nullptr>
-    template<bool UseSafe, typename... Reval,
+    template<internal::FunctionType UseSafe, typename... Reval,
              typename std::enable_if<sizeof...(Reval) >= 2>::type* = nullptr>
     auto createCall(std::string func) {
         return [lua = m_lua, f = func](auto... args) {
             std::tuple<Reval...> res;
-            getToStack(lua, f.c_str());
+            LuaHelpers::getToStack(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
             lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
             LuaHelpers::forEach(lua, res);
@@ -150,11 +178,11 @@ private:
         };
     }
 
-    template<bool UseSafe, typename... Reval,
+    template<internal::FunctionType UseSafe, typename... Reval,
              typename std::enable_if<sizeof...(Reval) == 1>::type* = nullptr>
     auto createCall(std::string func) {
         return [lua = m_lua, f = func](auto... args) {
-            getToStack(lua, f.c_str());
+            LuaHelpers::getToStack(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
             lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
             auto res = LuaHelpers::luaGet<typename std::tuple_element<0, std::tuple<Reval...>>::type>(lua, -1);
@@ -163,25 +191,34 @@ private:
         };
     }
 
-    template<bool UseSafe, typename... Reval,
+    template<internal::FunctionType UseSafe, typename... Reval,
              typename std::enable_if<sizeof...(Reval) == 0>::type* = nullptr>
     auto createCall(std::string func) {
         return [lua = m_lua, f = func](auto... args) {
-            getToStack(lua, f.c_str());
+            LuaHelpers::getToStack(lua, f.c_str());
             LuaHelpers::pushArguments(lua, std::forward<decltype(args)>(args)...);
             lcall<UseSafe, sizeof...(args), sizeof...(Reval)>(lua);
             lua_settop(lua, 0);
         };
     }
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    template<bool IsSafe, std::size_t ArgSize, std::size_t RevalSize,
-             typename std::enable_if<!IsSafe>::type* = nullptr>
+    // lua_call
+    // ================================================================================
+    template<internal::FunctionType CallType, std::size_t ArgSize, std::size_t RevalSize,
+             typename std::enable_if<CallType == internal::FunctionType::Function>::type* = nullptr>
     static void lcall(lua_State* lua) {
         lua_call(lua, ArgSize, RevalSize);
     }
 
-    template<bool IsSafe, std::size_t ArgSize, std::size_t RevalSize,
-             typename std::enable_if<IsSafe>::type* = nullptr>
+    template<internal::FunctionType CallType, std::size_t ArgSize, std::size_t RevalSize,
+             typename std::enable_if<CallType == internal::FunctionType::Normal>::type* = nullptr>
+    static void lcall(lua_State* lua) {
+        lua_call(lua, ArgSize, RevalSize);
+    }
+
+    template<internal::FunctionType CallType, std::size_t ArgSize, std::size_t RevalSize,
+             typename std::enable_if<CallType == internal::FunctionType::Safe>::type* = nullptr>
     static void lcall(lua_State* lua) {
         int as = ArgSize;
         int rs = RevalSize;
@@ -196,35 +233,8 @@ private:
             default: return;
         };
     }
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    static void popStack(lua_State* lua, int amount) {
-        lua_pop(lua, amount);
-    }
-
-    static std::size_t getToStack(lua_State* lua, const std::string& var) {
-        auto splits = misc::split(var, '.');
-        std::size_t pushes = 0;
-
-        auto err = [&](std::size_t index) -> bool {
-            auto err = lua_isnil(lua, -1) || lua_isnone(lua, -1);
-            if (err) {
-                std::string joined = splits[0];
-                for (std::size_t i = 1; i < index; ++i) { joined += '.' + splits[i]; }
-                throw exceptions::NoSuchKey("Error! No such field: " + joined);
-            }
-            pushes += 1;
-            return err;
-        };
-
-        lua_getglobal(lua, splits[0].c_str());
-        if (err(0)) { return pushes; }
-
-        for (std::size_t i = 1; i < splits.size(); ++i) {
-            lua_getfield(lua, -1, splits[i].c_str());
-            if (err(i)) { return pushes; }
-        }
-        return pushes;
-    }
 };
 
 } // namespace lua

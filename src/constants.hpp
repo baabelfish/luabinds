@@ -16,4 +16,13 @@ enum class GC {
     Step = LUA_GCSTEP,
     Stop = LUA_GCSTOP
 };
+
+namespace internal {
+enum class FunctionType {
+    Normal,
+    Safe,
+    Function
+};
+} // namespace internal
+
 } // namespace lua

@@ -1,11 +1,12 @@
 #pragma once
 
-#include "config.hpp"
-#include "exceptions.hpp"
 #include <tuple>
 #include <string>
 #include <vector>
 #include <exception>
+#include "config.hpp"
+#include "exceptions.hpp"
+#include "misc.hpp"
 
 namespace lua {
 namespace LuaHelpers {
@@ -84,6 +85,35 @@ forEach(lua_State* lua, T& t) {
     if (Index < std::tuple_size<T>::value) {
         forEach<Index + 1>(lua, t);
     }
+}
+
+inline std::size_t getToStack(lua_State* lua, const std::string& var) {
+    auto splits = misc::split(var, '.');
+    std::size_t pushes = 0;
+
+    auto err = [&](std::size_t index) -> bool {
+        auto err = lua_isnil(lua, -1) || lua_isnone(lua, -1);
+        if (err) {
+            std::string joined = splits[0];
+            for (std::size_t i = 1; i < index; ++i) { joined += '.' + splits[i]; }
+            throw exceptions::NoSuchKey("Error! No such field: " + joined);
+        }
+        pushes += 1;
+        return err;
+    };
+
+    lua_getglobal(lua, splits[0].c_str());
+    if (err(0)) { return pushes; }
+
+    for (std::size_t i = 1; i < splits.size(); ++i) {
+        lua_getfield(lua, -1, splits[i].c_str());
+        if (err(i)) { return pushes; }
+    }
+    return pushes;
+}
+
+inline void popStack(lua_State* lua, int amount) {
+    lua_pop(lua, amount);
 }
 
 } // namespace LuaHelpers
