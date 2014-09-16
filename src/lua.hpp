@@ -28,23 +28,37 @@ public:
      * first one is the function identifier and second is the function to call.
      */
     template<typename... Api>
-    Lua(const std::string& file, Api... api):
-        m_lua(luaL_newstate()),
-        m_file(file) {
+    Lua(Api... api):
+        m_lua(luaL_newstate()) {
+        static_assert(sizeof...(api) % 2 == 0, "Api should be given in (string, function) -pairs");
+
         if (!m_lua) { throw std::bad_alloc(); }
         luaL_openlibs(m_lua);
-
         attachApi(std::forward<Api>(api)...);
-        // attach(m_apif);
-
-        auto err = luaL_dofile(m_lua, file.c_str());
-        if (err) {
-            throw exceptions::CouldNotParse("Lua script not found or erroneous: " + file);
-        }
     }
 
     virtual ~Lua() {
         lua_close(m_lua);
+    }
+
+    static Lua defAndRun(std::string file) {
+        Lua lua;
+        lua.eval(file);
+        return lua;
+    }
+
+    template<typename... Api>
+    static Lua defAndRun(std::string file, Api... api) {
+        Lua lua(std::forward<Api>(api)...);
+        lua.eval(file);
+        return lua;
+    }
+
+    void eval(std::string file) {
+        auto err = luaL_dofile(m_lua, file.c_str());
+        if (err) {
+            throw exceptions::CouldNotParse("Lua script not found or erroneous: " + file);
+        }
     }
 
     /**
@@ -114,9 +128,21 @@ public:
         return m_lua;
     }
 
+    template<typename F>
+    void attach(std::string name, F f) {
+        static F temp = std::move(f);
+        temp = std::move(f);
+        auto cl = [](lua_State* state) -> int {
+            State params(state);
+            temp(params);
+            return params.sizeRevals();
+        };
+        lua_register(m_lua, name.c_str(), cl);
+    }
+
+
 private:
     lua_State* m_lua;
-    std::string m_file;
 
     template<typename... Args>
     void attachApi() {}

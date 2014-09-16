@@ -8,13 +8,15 @@ yTestPackage moonscript([]{
     describe("luabinds", []{
 
         it("", []{
-            lua::Lua lua(Path + "moonscript.lua");
+            lua::Lua lua;
+            lua.eval(Path + "moonscript.lua");
             auto re = lua.call<int>("MultiplyAndSum")(2, 3);
             Assert().isEqual(re, 11);
         });
 
         it("", []{
-            lua::Lua lua(Path + "moonscript2.lua");
+            lua::Lua lua;
+            lua.eval(Path + "moonscript2.lua");
         });
 
     });
