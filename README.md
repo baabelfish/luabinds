@@ -13,6 +13,7 @@ Simple and easy bindings for Lua that try to leverage from C++14.
 
 # Installation
 - Simply include ``luabinds.hpp`` and compile with c++14 support and lua linking
+- Works with ``GCC (4.9.1)`` and ``Clang (3.4.2)``
 
 ## Running the tests
 - You need moonscript compiler to run the tests
