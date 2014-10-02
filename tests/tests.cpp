@@ -6,6 +6,10 @@
 static const std::string Testfile = "tests/lua/luatest.lua";
 static const std::string Context1 = "tests/lua/context1.lua";
 static const std::string Context2 = "tests/lua/context2.lua";
+static const std::string Functions = "tests/lua/functions.lua";
+
+int free1(int a, int b) { return a + b; }
+int free2(int a) { return a * a; }
 
 yTestPackage pkg([]{
     describe("luabinds", []{
@@ -102,6 +106,22 @@ yTestPackage pkg([]{
                     .isFalse(hasVisitedFirst);
         });
 
+        it("Works with native functions", []{
+            bool hasVisitedA = false;
+            bool hasVisitedB = false;
+            bool hasVisitedC = false;
+
+            lua::Lua lua;
+            lua.attach("a", [&]() { hasVisitedA = true; });
+            lua.attach("b", [&]() { hasVisitedB = true; });
+            lua.attach("c", free1);
+            lua.attach("worksIndeed", [&]() { hasVisitedC = true; });
+            lua.eval(Functions);
+            Assert().isTrue(hasVisitedA)
+                    .isTrue(hasVisitedB)
+                    .isTrue(hasVisitedC);
+        });
+
         it("works with function variables", []{
             lua::Lua lua;
             lua.eval(Testfile);
@@ -147,7 +167,7 @@ yTestPackage pkg([]{
 
         it("can eval multiple files with the same context", []{
             lua::Lua lua;
-            lua.attach("sum", [](lua::State& s) {
+            lua.attachWithState("sum", [](lua::State& s) {
                 s.push(s.get<int>(1) + s.get<int>(2));
             });
 

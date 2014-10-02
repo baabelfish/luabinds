@@ -18,6 +18,7 @@ set(TESTS
     tests/errors.cpp
     tests/moonscript.cpp
     tests/tests.cpp
+    tests/tmp.cpp
 )
 
 add_executable(ytest ${SOURCES} ${TESTS})

@@ -124,21 +124,24 @@ assert(std::get<1>(result), "something");
 ```
 
 ## Calling C++ functions from Lua
-- Warning! This will change in the future.
-
 ```cpp
 // Exposes cppHello and cppSum functions 
 std::string lastVisitor;
-lua::Lua lua("tests/luatest.lua",
-    "cppHello", [&](lua::State& s) {
-        lastVisitor = s.get(0);
-        s.push("Hello " + lastVisitor + "!");
-    },
-    "cppSum", [](lua::State& s) {
-        int sum = 0;
-        for (int i = 1; i < s.sizeParameters() + 1; ++i) { sum += s.get<int>(i); }
-        s.push(sum);
-    });
+lua::Lua lua;
+
+lua.attach("cppHello", [&](std::string s) {
+    lastVisitor = s;
+    return "Hello " + lastVisitor + "!";
+});
+
+// Read from stack (for variadic methods)
+lua.attachWithState("cppSum", [](lua::State& s) {
+    int sum = 0;
+    for (int i = 1; i < s.sizeParameters() + 1; ++i) { sum += s.get<int>(i); }
+    s.push(sum);
+});
+
+lua.eval("tests/luatest.lua");
 ```
 
 

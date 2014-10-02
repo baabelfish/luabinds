@@ -7,6 +7,7 @@
 #include <vector>
 #include <exception>
 #include <functional>
+#include <utility>
 
 #include "config.hpp"
 #include "misc.hpp"
@@ -14,6 +15,7 @@
 #include "state.hpp"
 #include "exceptions.hpp"
 #include "constants.hpp"
+#include "function_traits.hpp"
 
 namespace lua {
 
@@ -52,6 +54,13 @@ public:
         Lua lua(std::forward<Api>(api)...);
         lua.eval(file);
         return lua;
+    }
+
+    void evalString(std::string str) {
+        auto err = luaL_dofile(m_lua, str.c_str());
+        if (err) {
+            throw exceptions::CouldNotParse("Could not parse");
+        }
     }
 
     void eval(std::string file) {
@@ -101,7 +110,6 @@ public:
     auto call(lua_CFunction func) {
         return [=](auto... args) {
             lua_pushcfunction(m_lua, func);
-            // std::cout << sizeof...(args) << std::endl;
             // LuaHelpers::pushArguments(m_lua, std::forward<decltype(args)>(args)...);
             lcall<internal::FunctionType::Normal, sizeof...(args), sizeof...(Reval)>(m_lua);
             lua_settop(m_lua, 0);
@@ -155,7 +163,7 @@ public:
     }
 
     template<typename F>
-    void attach(std::string name, F f) {
+    auto& attachWithState(std::string name, F f) {
         static F temp = std::move(f);
         temp = std::move(f);
         auto cl = [](lua_State* state) -> int {
@@ -164,6 +172,15 @@ public:
             return params.sizeRevals();
         };
         lua_register(m_lua, name.c_str(), cl);
+        return *this;
+    }
+
+    template<typename F>
+    auto& attach(std::string id, F f) {
+        using T = tmp::function_traits<F>;
+        typename T::param_types x;
+        reg<typename T::return_type>(id, f, x);
+        return *this;
     }
 
 
@@ -185,6 +202,55 @@ private:
         lua_register(m_lua, id.c_str(), lf);
         attachApi(std::forward<Args>(rest)...);
     }
+
+    // New function api
+    // ================================================================================
+    template<std::size_t Index, std::size_t End, typename T, typename std::enable_if<Index == End>::type* = nullptr>
+    static inline auto collect(T t, lua_State*) { return std::move(t); }
+
+    template<std::size_t Index, std::size_t End, typename T, typename std::enable_if<Index < End>::type* = nullptr>
+    static inline auto collect(T t, lua_State* state) {
+        using TE = typename std::tuple_element<Index, T>::type;
+        std::get<Index>(t) = LuaHelpers::luaGet<TE>(state, Index + 1);
+        return std::move(collect<Index + 1, End, T>(std::move(t), state));
+    }
+
+    template<typename... Args>
+    static inline auto collectAll(lua_State* state) {
+        return collect<0, sizeof...(Args), std::tuple<Args...>>(std::tuple<Args...>(), state);
+    }
+
+    template<typename R, typename... Args, typename F,
+             typename std::enable_if<std::is_void<R>::value>::type* = nullptr>
+    inline void reg(std::string id, F f) {
+        static std::function<R(Args...)> func;
+        func = f;
+        auto lf = [](lua_State* state) -> int {
+            auto t = collectAll<Args...>(state);
+            misc::call(func, t);
+            return 0;
+        };
+        lua_register(m_lua, id.c_str(), lf);
+    }
+
+    template<typename R, typename... Args, typename F,
+             typename std::enable_if<!std::is_void<R>::value>::type* = nullptr>
+    inline void reg(std::string id, F f) {
+        static std::function<R(Args...)> func;
+        func = f;
+        auto lf = [](lua_State* state) -> int {
+            auto t = collectAll<Args...>(state);
+            LuaHelpers::luaPush(state, misc::call(func, t));
+            return 1;
+        };
+        lua_register(m_lua, id.c_str(), lf);
+    }
+
+    template<typename R, typename F, template<typename...> class P, typename... Args>
+    void reg(std::string id, F f, const P<Args...>&) {
+        reg<R, Args...>(id, f);
+    }
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     // createCall
     // ================================================================================
