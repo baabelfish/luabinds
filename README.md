@@ -125,29 +125,35 @@ assert(std::get<1>(result), "something");
 
 ## Calling C++ functions from Lua
 ```cpp
-// Exposes cppHello and cppSum functions 
-std::string lastVisitor;
-lua::Lua lua;
+int sum(int a, int b) {
+    return a + b;
+}
 
-lua.attach("cppHello", [&](std::string s) {
-    lastVisitor = s;
-    return "Hello " + lastVisitor + "!";
-});
+int main() {
+    std::string lastVisitor;
+    lua::Lua lua;
 
-// Read from stack (for variadic methods)
-lua.attachWithState("cppSum", [](lua::State& s) {
-    int sum = 0;
-    for (int i = 1; i < s.sizeParameters() + 1; ++i) { sum += s.get<int>(i); }
-    s.push(sum);
-});
+    // Free functions
+    lua.attach("sum", sum);
 
-lua.eval("tests/luatest.lua");
+    // std::function
+    lua.attach("cppHello", [&](std::string s) {
+        lastVisitor = s;
+        return "Hello " + lastVisitor + "!";
+    });
+
+    // Read from stack (for variadic methods)
+    lua.attachWithState("cppSum", [](lua::State& s) {
+        int sum = 0;
+        for (int i = 1; i < s.sizeParameters() + 1; ++i) { sum += s.get<int>(i); }
+        s.push(sum);
+    });
+
+    lua.eval("tests/luatest.lua");
+}
 ```
 
 
-# Caveats
-- Does not support all functionality lua provides for c++
-- There are some ugly hacks that might not work in the future
-
 # TODO
-- Change script while running it
+- [ ] Support for containers as parameters and return values
+
