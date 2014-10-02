@@ -86,19 +86,19 @@ yTestPackage pkg([]{
             bool hasVisitedFirst = false;
             bool hasVisitedOther = false;
 
-            lua::Lua lua(
-                "first", [&](lua::State& s) {
-                    hasVisitedFirst = true;
-                    s.push(s.get(0));
-                },
-                "helloFromCpp", [&](lua::State& s) {
-                    hasVisitedHello = true;
-                    s.push(s.sizeParameters() > 0 ? "Hello, " + s.get(1) : "Hello!");
-                },
-                "other", [&](lua::State& s) {
-                    hasVisitedOther = true;
-                    s.push("Other func");
-                });
+            lua::Lua lua;
+            lua.attachWithState("first", [&](lua::State& s) {
+                hasVisitedFirst = true;
+                s.push(s.get(0));
+            })
+            .attachWithState("helloFromCpp", [&](lua::State& s) {
+                hasVisitedHello = true;
+                s.push(s.sizeParameters() > 0 ? "Hello, " + s.get(1) : "Hello!");
+            })
+            .attachWithState("other", [&](lua::State& s) {
+                hasVisitedOther = true;
+                s.push("Other func");
+            });
             lua.eval(Testfile);
 
             Assert().isTrue(hasVisitedHello)
@@ -129,14 +129,14 @@ yTestPackage pkg([]{
         });
 
         it("works with variadic cpp-functions", []{
-            lua::Lua lua(
-                "cppsum", [](lua::State& s) {
-                    int sum = 0;
-                    for (int i = 1; i < s.sizeParameters() + 1; ++i) {
-                        sum += s.get<int>(i);
-                    }
-                    s.push(sum);
-                });
+            lua::Lua lua;
+            lua.attachWithState("cppsum", [](lua::State& s) {
+                int sum = 0;
+                for (int i = 1; i < s.sizeParameters() + 1; ++i) {
+                    sum += s.get<int>(i);
+                }
+                s.push(sum);
+            });
             lua.eval(Testfile);
             Assert().isEqual(lua.get<int>("cppsumValue"), 15);
         });

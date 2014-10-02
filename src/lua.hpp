@@ -21,22 +21,10 @@ namespace lua {
 
 class Lua {
 public:
-    /**
-     * @brief Creates a lua context by running a file
-     *
-     * @param file Name of the file to run
-     * @param api Variadic arguments for apifunctions seen by the script.
-     * Given in pairs (std::string, std::function<void(lua::State&)>) where
-     * first one is the function identifier and second is the function to call.
-     */
-    template<typename... Api>
-    Lua(Api... api):
+    Lua():
         m_lua(luaL_newstate()) {
-        static_assert(sizeof...(api) % 2 == 0, "Api should be given in (string, function) -pairs");
-
         if (!m_lua) { throw std::bad_alloc(); }
         luaL_openlibs(m_lua);
-        attachApi(std::forward<Api>(api)...);
     }
 
     virtual ~Lua() {
@@ -164,11 +152,11 @@ public:
 
     template<typename F>
     auto& attachWithState(std::string name, F f) {
-        static F temp = std::move(f);
-        temp = std::move(f);
+        static std::function<void(State&)> func;
+        func = f;
         auto cl = [](lua_State* state) -> int {
             State params(state);
-            temp(params);
+            func(params);
             return params.sizeRevals();
         };
         lua_register(m_lua, name.c_str(), cl);
@@ -186,22 +174,6 @@ public:
 
 private:
     lua_State* m_lua;
-
-    template<typename... Args>
-    void attachApi() {}
-
-    template<typename... Args>
-    void attachApi(std::string id, std::function<void(State&)> f, Args... rest) {
-        static std::function<void(State&)> func;
-        func = f;
-        auto lf = [](lua_State* state) -> int {
-            State params(state);
-            func(params);
-            return params.sizeRevals();
-        };
-        lua_register(m_lua, id.c_str(), lf);
-        attachApi(std::forward<Args>(rest)...);
-    }
 
     // New function api
     // ================================================================================
