@@ -4,53 +4,75 @@
 #include "lua.hpp"
 #include "helpers.hpp"
 
+#include <iomanip>
+#include <unordered_map>
+#include <vector>
+#include <string>
+
 namespace lua {
 
 class Debugger {
 public:
-    Debugger(lua_State* handle):
-        m_lua(handle) {
+    struct StackInfo {
+        int line;
+        int func_firstline;
+        int func_lastline;
+        int event;
+        unsigned param_amount;
+        unsigned upvalues;
+        bool is_tailcall;
+        bool is_vararg;
+        std::string what;
+        std::string source;
+        std::string short_source;
+        std::string name;
+        std::string namewhat;
+
+        StackInfo(lua_Debug* ar):
+            line(ar->currentline),
+            func_firstline(ar->linedefined),
+            func_lastline(ar->lastlinedefined),
+            event(ar->event),
+            param_amount(ar->nparams),
+            upvalues(ar->nups),
+            is_tailcall(ar->istailcall),
+            is_vararg(ar->isvararg),
+            what(ar->what),
+            source(ar->source),
+            short_source(ar->short_src),
+            name(ar->name ? ar->name : ""),
+            namewhat(ar->namewhat)
+        {}
+    };
+
+    static auto& callbacks() {
+        static std::unordered_map<lua_State*, std::function<bool(StackInfo)>> s_tracebacks;
+        return s_tracebacks;
     }
 
-    Debugger(const lua::Lua& lua):
-        m_lua(lua.handle()) {
+    static void hook(lua_State* state, lua_Debug* ar) {
+        lua_getinfo(state, "nSlLtuf", ar);
+        auto it = callbacks().find(state);
+        if (it != callbacks().end()) {
+            it->second(StackInfo(ar));
+        }
     }
 
-    virtual ~Debugger() {
+    template<typename F>
+    static void attach(const lua::Lua& lua, F f) { attach(lua.handle(), std::forward<F>(f)); }
+
+    template<typename F>
+    static void attach(lua_State* handle, F f) {
+        callbacks()[handle] = std::move(f);
+        lua_sethook(handle, hook, LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE, 0);
     }
 
-    void info(std::string obj) {
-        // lua_Debug ar;
-        // lua_getglobal(m_lua, obj.c_str());
-        // LuaHelpers::getToStack(m_lua, obj);
-
-        // if (lua_getinfo(m_lua, "n", &ar)) {
-        //     std::cout << ar.name << std::endl;
-        //     std::cout << ar.namewhat << std::endl;
-        // }
-        // if (lua_getinfo(m_lua, "S", &ar)) {
-        //     std::cout << ar.source << std::endl;
-        //     std::cout << ar.short_src << std::endl;
-        //     std::cout << ar.linedefined << std::endl;
-        //     std::cout << ar.lastlinedefined << std::endl;
-        //     std::cout << ar.what << std::endl;
-        // }
-        // if (lua_getinfo(m_lua, "l", &ar)) {
-        //     std::cout << ar.currentline << std::endl;
-        // }
-        // if (lua_getinfo(m_lua, "t", &ar)) {
-        //     std::cout << ar.istailcall << std::endl;
-        // }
-        // if (lua_getinfo(m_lua, "u", &ar)) {
-        //     std::cout << ar.nups << std::endl;
-        //     std::cout << ar.nparams << std::endl;
-        //     std::cout << ar.isvararg << std::endl;
-        // }
+    static void detach(const lua::Lua& lua) { detach(lua.handle()); }
+    static void detach(lua_State* handle) {
+        lua_sethook(handle, hook, 0, 0);
+        callbacks().erase(handle);
     }
 
-
-private:
-    lua_State* m_lua;
 };
 
 } // namespace lua

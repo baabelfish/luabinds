@@ -61,3 +61,12 @@ function refunc(a)
         print(a)
     end
 end
+
+function wtf(...)
+    result = 0;
+    for _, v in ipairs({...}) do
+        result = result + v
+    end
+    return result
+end
+

@@ -3,6 +3,7 @@
 #include <iostream>
 
 static const std::string Testfile = "tests/lua/containers.lua";
+static const std::string Testfile2 = "tests/lua/luatest.lua";
 
 yTestPackage containers([]{
     describe("container handling", []{
@@ -25,10 +26,5 @@ yTestPackage containers([]{
             data->push_back(s.get<data_value_type>(1));
         });
 
-        lua.eval(Testfile);
-
-        it("it can cope with containers", [&]{
-            Assert().isFalse(lua.get<bool>("fail"));
-        });
     });
 });

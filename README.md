@@ -156,8 +156,8 @@ int main() {
 
 
 # TODO
+- [x] Sane support for debugging
 - [ ] Support for containers as parameters and return values
-- [ ] Merge attachWithState and attach into same function
-- [ ] Sane support for debugging
 - [ ] Yield support
+- [ ] Merge attachWithState and attach into same function
 
