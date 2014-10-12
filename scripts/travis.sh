@@ -17,4 +17,14 @@ wget 'http://sourceforge.net/projects/luabinaries/files/5.2.3/Linux%20Libraries/
 tar xf lua.tar.gz
 rm -f liblua52.so
 
+echo "== VERSIONS ============================================================="
+clang++ --version
+echo ""
+luarocks --version
+echo ""
+g++ --version
+echo ""
+moon --version
+echo "========================================================================="
+
 clang++ -o ytest -std=c++1y -I./include -L`pwd`/ tests/*.cpp -llua52 -ldl && ./scripts/buildmoonscripts.sh && ./ytest
