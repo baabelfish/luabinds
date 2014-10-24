@@ -14,7 +14,8 @@
 namespace lua {
 namespace LuaHelpers {
 
-template<typename T> void luaPush(lua_State* state, T param);
+template<typename T> void luaPush(lua_State*, T);
+
 template<> inline void luaPush<std::string>(lua_State* state, std::string param) { lua_pushstring(state, param.c_str()); }
 template<> inline void luaPush<std::nullptr_t>(lua_State* state, std::nullptr_t) { lua_pushnil(state); }
 LUA_PUSH_HELPER(lua_pushboolean, bool)
@@ -29,6 +30,7 @@ LUA_PUSH_HELPER(lua_pushstring, char const*)
 LUA_PUSH_HELPER(lua_pushunsigned, unsigned int)
 LUA_PUSH_HELPER(lua_pushunsigned, unsigned long long)
 LUA_PUSH_HELPER(lua_pushunsigned, unsigned long)
+LUA_PUSH_HELPER(lua_pushunsigned, unsigned char)
 
 template<typename T>
 T luaGet(lua_State* state, int index);
@@ -44,6 +46,7 @@ LUA_GET_HELPER(lua_tostring, lua_isstring, std::string)
 LUA_GET_HELPER(lua_tounsigned, lua_isnumber, unsigned int)
 LUA_GET_HELPER(lua_tounsigned, lua_isnumber, unsigned long long)
 LUA_GET_HELPER(lua_tounsigned, lua_isnumber, unsigned long)
+LUA_GET_HELPER(lua_tounsigned, lua_isnumber, unsigned char)
 LUA_GET_HELPER(lua_touserdata, lua_islightuserdata, void*)
 
 inline lua_State* pushArguments(lua_State* state) { return state; }
